@@ -11,21 +11,25 @@ propagates a failed invocation before looking for its completion marker.
 ## Measured checks
 
 - `bash -n ralph.sh`: exit 0, 0.002 seconds.
-- `python3 -B -m unittest discover -s tests -v`: exit 0, 0.107 seconds.
-- `git diff --check`: exit 0, 0.014 seconds.
+- `python3 -B -m unittest discover -s tests -v`: exit 0, 0.201 seconds.
+- `git diff --check`: exit 0, 0.002 seconds.
 
-Five offline tests cover both prompt paths/default permissions, immediate failure
+Six offline tests cover both prompt paths/default permissions, immediate failure
 without retry (even if failed output contains the completion marker), invalid
-selector and missing selector. These are mock launcher checks, not proof of a
+selector, missing selector and a two-million-byte successful response. These are mock launcher checks, not proof of a
 working subscription, live model, deployment or persistent sweep.
 
 ## Checked source hashes (SHA-256)
 
-- `ralph.sh`: `bceb351b55a3ef98ff97a0ef890b966eeaeef13572fd2471d80df3320a291bd8`
+- `ralph.sh`: `49055d9844400e9df41ebc440957c6d26153a49db14dad82ad97735c26481d6e`
 - `AGENTS.md`: `8c632345992230010961d8c99185a4fa86f0c2a4375321613ffe7e898bb1c075`
 - `CLAUDE.md`: `5ead133b8e50c5d60969353c0acac9f89f87b79d14a327290042f33f4cf695a7`
 - `README.md`: `6fa00072321b4d7a1b31f1048491859e30551a367a1576bc9bca2a3d7d7dc105`
-- `tests/test_launcher.py`: `2130fd39cf07712ed73bff88945c530a1b87407b94bc0e6346ccce35b1518f1f`
+- `tests/test_launcher.py`: `c0da04c02b936948287f4d649674ae913f03c0487e7a470d328309a2fe59265b`
+
+A preparatory same-family reviewer reproduced a large-response SIGPIPE issue
+in the completion-marker pipeline. Bash substring matching now avoids that
+pipeline; the large-response regression passes for both tools.
 
 ## Release gate and rollback
 
