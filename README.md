@@ -97,6 +97,15 @@ This creates `prd.json` with user stories structured for autonomous execution.
 
 Default is 10 iterations. Use `--tool amp` or `--tool claude` to select your AI coding tool.
 
+Run engineering only in a verified Cloud executor under the target project's
+existing owner and coordination contract (see `AGENTS.md`). The launcher keeps
+normal CLI permission checks enabled and stops immediately on a CLI failure,
+including permission denial or exhausted subscription capacity. It does not
+retry a failed invocation or grant permission bypasses. In unattended use,
+pre-authorise only the bounded tools through the supported Cloud runner; a
+permission prompt or denied operation is not authority to bypass it. No real
+model invocation is part of the launcher's offline tests.
+
 Ralph will:
 1. Create a feature branch (from PRD `branchName`)
 2. Pick the highest priority story where `passes: false`

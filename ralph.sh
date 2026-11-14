@@ -2,7 +2,7 @@
 # Ralph Wiggum - Long-running AI agent loop
 # Usage: ./ralph.sh [--tool amp|claude] [max_iterations]
 
-set -e
+set -eo pipefail
 
 # Parse arguments
 TOOL="amp"  # Default to amp for backwards compatibility
@@ -11,6 +11,10 @@ MAX_ITERATIONS=10
 while [[ $# -gt 0 ]]; do
   case $1 in
     --tool)
+      if [[ $# -lt 2 ]]; then
+        echo "Error: --tool requires amp or claude." >&2
+        exit 2
+      fi
       TOOL="$2"
       shift 2
       ;;
@@ -87,14 +91,26 @@ for i in $(seq 1 $MAX_ITERATIONS); do
   echo "  Ralph Iteration $i of $MAX_ITERATIONS ($TOOL)"
   echo "==============================================================="
 
-  # Run the selected tool with the ralph prompt
+  # Retain the selected CLI's normal permission checks. A denied tool, exhausted
+  # subscription or CLI failure stops the loop; it must not trigger retries.
   if [[ "$TOOL" == "amp" ]]; then
-    OUTPUT=$(cat "$SCRIPT_DIR/prompt.md" | amp --dangerously-allow-all 2>&1 | tee /dev/stderr) || true
+    if OUTPUT=$(amp < "$SCRIPT_DIR/prompt.md" 2>&1 | tee /dev/stderr); then
+      :
+    else
+      status=$?
+      echo "Ralph stopped: amp exited $status. Resolve access without bypassing permissions." >&2
+      exit "$status"
+    fi
   else
-    # Claude Code: use --dangerously-skip-permissions for autonomous operation, --print for output
-    OUTPUT=$(claude --dangerously-skip-permissions --print < "$SCRIPT_DIR/CLAUDE.md" 2>&1 | tee /dev/stderr) || true
+    if OUTPUT=$(claude --print < "$SCRIPT_DIR/CLAUDE.md" 2>&1 | tee /dev/stderr); then
+      :
+    else
+      status=$?
+      echo "Ralph stopped: claude exited $status. Resolve access without bypassing permissions." >&2
+      exit "$status"
+    fi
   fi
-  
+
   # Check for completion signal
   if echo "$OUTPUT" | grep -q "<promise>COMPLETE</promise>"; then
     echo ""
